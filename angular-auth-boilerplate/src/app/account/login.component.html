@@ -1,0 +1,32 @@
+<div class="text-center">
+  <h1 class="h4 text-gray-900 mb-4">Welcome Back!</h1>
+</div>
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <div class="form-group mb-3">
+    <input type="text" formControlName="email" class="form-control form-control-user" placeholder="Email Address"
+      [ngClass]="{ 'is-invalid': submitted && f['email'].errors }" />
+    <div *ngIf="submitted && f['email'].errors" class="invalid-feedback">
+      <div *ngIf="f['email'].errors['required']">Email is required</div>
+      <div *ngIf="f['email'].errors['email']">Email must be a valid email address</div>
+    </div>
+  </div>
+  <div class="form-group mb-3">
+    <input type="password" formControlName="password" class="form-control form-control-user" placeholder="Password"
+      [ngClass]="{ 'is-invalid': submitted && f['password'].errors }" />
+    <div *ngIf="submitted && f['password'].errors" class="invalid-feedback">
+      <div *ngIf="f['password'].errors['required']">Password is required</div>
+    </div>
+  </div>
+  <button [disabled]="loading" class="btn btn-primary btn-user btn-block w-100">
+    <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+    Login
+  </button>
+  <div *ngIf="error" class="alert alert-danger mt-3 mb-0">{{error}}</div>
+  <hr>
+  <div class="text-center">
+    <a class="small" routerLink="/account/register">Create an Account!</a>
+  </div>
+  <div class="text-center">
+    <a class="small" routerLink="/account/forgot-password">Forgot Password?</a>
+  </div>
+</form>
