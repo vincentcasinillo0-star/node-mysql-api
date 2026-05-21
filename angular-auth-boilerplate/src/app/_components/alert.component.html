@@ -1,4 +1,0 @@
-<div *ngFor="let alert of alerts" class="{{cssClasses(alert)}} alert-dismissible" role="alert" [ngClass]="{ 'fade': alert.fade }">
-  <span [innerHTML]="alert.message"></span>
-  <button type="button" class="btn-close" (click)="removeAlert(alert)"></button>
-</div>

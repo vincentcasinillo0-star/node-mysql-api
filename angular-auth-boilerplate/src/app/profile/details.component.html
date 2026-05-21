@@ -1,7 +1,0 @@
-<ng-container *ngIf="account$ | async as account">
-  <h3>My Details</h3>
-  <p><strong>Name: </strong>{{account.title}} {{account.firstName}} {{account.lastName}}</p>
-  <p><strong>Email: </strong>{{account.email}}</p>
-  <p><strong>Role: </strong>{{account.role}}</p>
-  <p><a routerLink="../update">Update Profile</a></p>
-</ng-container>
