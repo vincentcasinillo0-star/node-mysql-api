@@ -2,14 +2,14 @@
     "database": {
         "host": "153.92.15.31",
         "port": 3306,
-        "user": "U875409848_2026",
-        "password": "b$Nkxa*G9",
-        "database": "defaultdb",
+        "user": "u875409848_casinillo",
+        "password": "2qW^sUg=M",
+        "database": "u875409848_casinillo",
         "ssl": {
             "rejectUnauthorized": false
         }
     },
-     "secret": "SUPER_SECRET_KEY_REPLACE_ME_IN_PRODUCTION",
+    "secret": "SUPER_SECRET_KEY_REPLACE_ME_IN_PRODUCTION",
     "emailFrom": "americo.skiles48@ethereal.email",
     "smtpOptions": {
         "host": "smtp.ethereal.email",
