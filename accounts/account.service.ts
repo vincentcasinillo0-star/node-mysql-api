@@ -1,3 +1,4 @@
+import config from '../config.json';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -5,25 +6,6 @@ import { Op } from 'sequelize';
 import sendEmail from '../_helpers/send-email';
 import db from '../_helpers/db';
 import Role from '../_helpers/role';
-
-// Load file config only in non-production
-let fileConfig: any = {};
-if (process.env.NODE_ENV !== 'production') {
-    try {
-        fileConfig = require('../config.json');
-    } catch (e) {
-        // config.json not present, rely on env vars
-    }
-}
-
-function getJwtSecret(): string {
-    if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-        throw 'JWT_SECRET environment variable is required in production';
-    }
-    const secret = process.env.JWT_SECRET || fileConfig.secret;
-    if (!secret) throw 'JWT secret is missing';
-    return secret;
-}
 
 export default {
     authenticate,
@@ -50,6 +32,7 @@ async function authenticate({ email, password, ipAddress }: any) {
 
     const jwtToken = generateJwtToken(account);
     const refreshToken = generateRefreshToken(account, ipAddress);
+
     await refreshToken.save();
 
     return {
@@ -81,6 +64,7 @@ async function refreshToken({ token, ipAddress }: any) {
 
 async function revokeToken({ token, ipAddress }: any) {
     const refreshToken = await getRefreshToken(token);
+
     refreshToken.revoked = Date.now();
     refreshToken.revokedByIp = ipAddress;
     await refreshToken.save();
@@ -92,14 +76,19 @@ async function register(params: any, origin: any) {
     }
 
     const account = new db.Account(params);
+
     const isFirstAccount = (await db.Account.count()) === 0;
     account.role = isFirstAccount ? Role.Admin : Role.User;
     account.verificationToken = randomTokenString();
     account.passwordHash = await hash(params.password);
-    await account.save();
-    await sendVerificationEmail(account, origin);
-}
 
+    await account.save();
+
+    await sendVerificationEmail(account, origin);
+    
+    return account.verificationToken;
+}
+   
 async function verifyEmail({ token }: any) {
     const account = await db.Account.findOne({ where: { verificationToken: token } });
 
@@ -118,7 +107,10 @@ async function forgotPassword({ email }: any, origin: any) {
     account.resetToken = randomTokenString();
     account.resetTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await account.save();
+
     await sendPasswordResetEmail(account, origin);
+    
+    return account.resetToken;
 }
 
 async function validateResetToken({ token }: any) {
@@ -136,6 +128,7 @@ async function validateResetToken({ token }: any) {
 
 async function resetPassword({ token, password }: any) {
     const account = await validateResetToken({ token });
+
     account.passwordHash = await hash(password);
     account.passwordReset = Date.now();
     account.resetToken = null;
@@ -159,8 +152,11 @@ async function create(params: any) {
 
     const account = new db.Account(params);
     account.verified = Date.now();
+
     account.passwordHash = await hash(params.password);
+
     await account.save();
+
     return basicDetails(account);
 }
 
@@ -178,6 +174,7 @@ async function update(id: any, params: any) {
     Object.assign(account, params);
     account.updated = Date.now();
     await account.save();
+
     return basicDetails(account);
 }
 
@@ -186,7 +183,8 @@ async function _delete(id: any) {
     await account.destroy();
 }
 
-// Helper functions
+// --- Helper functions ---
+
 async function getAccount(id: any) {
     const account = await db.Account.findByPk(id);
     if (!account) throw 'Account not found';
@@ -204,7 +202,7 @@ async function hash(password: any) {
 }
 
 function generateJwtToken(account: any) {
-    return jwt.sign({ sub: account.id, id: account.id }, getJwtSecret(), { expiresIn: '15m' });
+    return jwt.sign({ sub: account.id, id: account.id }, config.secret, { expiresIn: '15m' });
 }
 
 function generateRefreshToken(account: any, ipAddress: any) {
@@ -226,15 +224,9 @@ function basicDetails(account: any) {
 }
 
 async function sendVerificationEmail(account: any, origin: any) {
-    let message;
-    if (origin) {
-        const verifyUrl = `${origin}/account/verify-email?token=${account.verificationToken}`;
-        message = `<p>Please click the below link to verify your email address:</p>
-                   <p><a href="${verifyUrl}">${verifyUrl}</a></p>`;
-    } else {
-        message = `<p>Please use the below token to verify your email address with the <code>/account/verify-email</code> api route:</p>
-                   <p><code>${account.verificationToken}</code></p>`;
-    }
+    const verifyUrl = `${process.env.FRONTEND_URL}/account/verify-email?token=${account.verificationToken}`;
+    const message = `<p>Please click the below link to verify your email address:</p>
+                     <p><a href="${verifyUrl}">${verifyUrl}</a></p>`;
 
     await sendEmail({
         to: account.email,
@@ -246,12 +238,7 @@ async function sendVerificationEmail(account: any, origin: any) {
 }
 
 async function sendAlreadyRegisteredEmail(email: any, origin: any) {
-    let message;
-    if (origin) {
-        message = `<p>If you don't know your password please visit the <a href="${origin}/account/forgot-password">forgot password</a> page.</p>`;
-    } else {
-        message = `<p>If you don't know your password you can reset it via the <code>/account/forgot-password</code> api route.</p>`;
-    }
+    const message = `<p>If you don't know your password please visit the <a href="${process.env.FRONTEND_URL}/account/forgot-password">forgot password</a> page.</p>`;
 
     await sendEmail({
         to: email,
@@ -263,15 +250,9 @@ async function sendAlreadyRegisteredEmail(email: any, origin: any) {
 }
 
 async function sendPasswordResetEmail(account: any, origin: any) {
-    let message;
-    if (origin) {
-        const resetUrl = `${origin}/account/reset-password?token=${account.resetToken}`;
-        message = `<p>Please click the below link to reset your password, the link will be valid for 1 day:</p>
-                   <p><a href="${resetUrl}">${resetUrl}</a></p>`;
-    } else {
-        message = `<p>Please use the below token to reset your password with the <code>/account/reset-password</code> api route:</p>
-                   <p><code>${account.resetToken}</code></p>`;
-    }
+    const resetUrl = `${process.env.FRONTEND_URL}/account/reset-password?token=${account.resetToken}`;
+    const message = `<p>Please click the below link to reset your password, the link will be valid for 1 day:</p>
+                     <p><a href="${resetUrl}">${resetUrl}</a></p>`;
 
     await sendEmail({
         to: account.email,

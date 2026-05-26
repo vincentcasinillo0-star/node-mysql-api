@@ -12,15 +12,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-// CORS configuration
-const corsOrigin = process.env.CORS_ORIGIN;
-
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? (corsOrigin ? corsOrigin.split(',').map(x => x.trim()) : false)
-        : (origin: any, callback: any) => callback(null, true),
-    credentials: true
-}));
+// Allow cors requests from any origin with credentials
+app.use(cors({ origin: (origin, callback) => callback(null, true), credentials: true }));
 
 // API routes
 app.use('/accounts', accountsController);
