@@ -86,7 +86,6 @@ async function register(params: any, origin: any) {
 
     await sendVerificationEmail(account, origin);
     
-    return account.verificationToken;
 }
    
 async function verifyEmail({ token }: any) {
