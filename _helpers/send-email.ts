@@ -1,18 +1,17 @@
-import { TransactionalEmailsApi, SendSmtpEmail, TransactionalEmailsApiApiKeys } from '@getbrevo/brevo';
+import { Brevo } from '@getbrevo/brevo';
 
-const apiInstance = new TransactionalEmailsApi();
-apiInstance.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY as string);
+const client = new Brevo({
+    apiKey: process.env.BREVO_API_KEY as string
+});
 
 export default async function sendEmail({ to, subject, html }: any) {
-    const sendSmtpEmail = new SendSmtpEmail();
-
-    sendSmtpEmail.to = [{ email: to }];
-    sendSmtpEmail.sender = { email: 'ac9427001@smtp-brevo.com', name: 'No Reply' };
-    sendSmtpEmail.subject = subject;
-    sendSmtpEmail.htmlContent = html;
-
     try {
-        await apiInstance.sendTransacEmail(sendSmtpEmail);
+        await client.transactionalEmails.sendTransacEmail({
+            to: [{ email: to }],
+            sender: { email: 'ac9427001@smtp-brevo.com', name: 'No Reply' },
+            subject,
+            htmlContent: html
+        });
         console.log('Email sent successfully');
     } catch (error: any) {
         console.error('Email sending failed:', error);
