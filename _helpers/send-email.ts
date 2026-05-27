@@ -8,7 +8,7 @@ export default async function sendEmail({ to, subject, html }: any) {
     try {
         await client.transactionalEmails.sendTransacEmail({
             to: [{ email: to }],
-            sender: { email: 'ac9427001@smtp-brevo.com', name: 'No Reply' },
+            sender: { email: 'vincentcasinillo246@gmail.com', name: 'No Reply' },
             subject,
             htmlContent: html
         });
